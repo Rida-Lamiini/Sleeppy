@@ -1,0 +1,19 @@
+{
+  "parser": "@babel/eslint-parser",
+  "extends": [
+    "@react-native-community",
+    "plugin:flowtype/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": [
+    "flowtype"
+  ],
+  "rules": {
+    "prettier/prettier": [
+      "error",
+      {
+        "singleQuote": true
+      }
+    ]
+  }
+}
