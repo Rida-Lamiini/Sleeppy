@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { supabase } from "../../utils/supabaseClient";
+import services from "../../utils/services";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -40,7 +41,9 @@ export default function RegisterScreen() {
         "Success",
         "Account created successfully! Please check your email for verification."
       );
-      router.push("/onboardingScreen"); // Redirect to onboarding screen after registration
+      await services.storeData("login", "true");
+
+      router.push("/onboardingScreen");
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {

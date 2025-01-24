@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { supabase } from "../../utils/supabaseClient"; // Import Supabase client
+import services from "../../utils/services";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -36,6 +37,8 @@ export default function LoginScreen() {
       if (error) {
         throw error;
       }
+
+      await services.storeData("login", "true");
 
       Alert.alert("Success", "Logged in successfully!");
       router.replace("/"); // Redirect to home screen after login
