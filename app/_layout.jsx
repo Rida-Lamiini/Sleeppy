@@ -10,9 +10,7 @@ export default function RootLayout() {
   const router = useRouter();
   const checkUserAuth = async () => {
     try {
-      const store = await services.getData("login");
-      console.log("rr", store);
-
+      const reset = await services.storeData("login", "false");
       const result = await services.getData("login");
       console.log("User authenticated status:", result);
       if (result !== "true") {
@@ -26,10 +24,10 @@ export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-      <Stack.Screen name="login" options={{ title: "Login" }} />
-      <Stack.Screen name="register" options={{ title: "Register" }} />
-      <Stack.Screen name="onboardingScreen" options={{ title: "ob" }} />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
+      <Stack.Screen name="onboardingScreen" />
+      <Stack.Screen name="SetupScreen" />
     </Stack>
   );
 }
