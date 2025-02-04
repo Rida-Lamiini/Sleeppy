@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useRouter } from "expo-router";
+import { router } from "expo-router";
 import { supabase } from "../../utils/supabaseClient";
 
 const AlarmCard = ({
@@ -21,8 +21,9 @@ const AlarmCard = ({
   onEditTime,
   isExpanded,
   toggleExpand,
-  isActive, // Pass isActive as a prop
-  onToggleActive, // Function to toggle active state
+  isActive,
+  onToggleActive,
+  onDelete, // Add onDelete prop
 }) => {
   const days = ["L", "M", "M", "J", "V", "S", "D"];
 
@@ -84,7 +85,11 @@ const AlarmCard = ({
                 <Ionicons name="logo-google" size={24} color="#4285F4" />
                 <Text style={styles.routineText}>Google Assistant Routine</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.routineRow}>
+              {/* Delete Button */}
+              <TouchableOpacity
+                style={styles.routineRow}
+                onPress={onDelete} // Call onDelete when pressed
+              >
                 <Ionicons name="trash-outline" size={24} color="#FF6B6B" />
                 <Text style={styles.routineText}>Delete</Text>
               </TouchableOpacity>
@@ -96,7 +101,7 @@ const AlarmCard = ({
         <TouchableOpacity onPress={onToggleActive} style={styles.activeToggle}>
           <Ionicons
             name={isActive ? "toggle" : "toggle-outline"}
-            size={24}
+            size={35}
             color={isActive ? "#FF6B6B" : "#A5A5A5"}
           />
         </TouchableOpacity>
@@ -104,7 +109,7 @@ const AlarmCard = ({
         <TouchableOpacity onPress={toggleExpand} style={styles.expandButton}>
           <Ionicons
             name={isExpanded ? "chevron-up-outline" : "chevron-down-outline"}
-            size={24}
+            size={35}
             color="#fff"
           />
         </TouchableOpacity>
@@ -114,15 +119,7 @@ const AlarmCard = ({
 };
 
 export default function WakeUpSleepSetup() {
-  const [alarms, setAlarms] = useState([
-    {
-      wakeUpTime: "07:00",
-      sleepTime: "22:00",
-      selectedDays: [true, true, true, true, true, true, true],
-      isExpanded: false,
-      isActive: true, // Add this to set the alarm as active by default
-    },
-  ]);
+  const [alarms, setAlarms] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [tempWakeUpTime, setTempWakeUpTime] = useState("07:00");
   const [tempSleepTime, setTempSleepTime] = useState("22:00");
@@ -135,130 +132,8 @@ export default function WakeUpSleepSetup() {
     true,
     true,
   ]);
-  const [userId, setUserId] = useState();
-  useEffect(() => {
-    const fetchUserName = async () => {
-      try {
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+  const [userId, setUserId] = useState(null);
 
-        if (sessionError || !session) {
-          throw new Error("No active session. Please log in again.");
-        }
-
-        setUserId(session.user.id);
-
-        console.log(userId);
-      } catch (error) {
-        console.error("Error fetching user name:", error.message);
-        Alert.alert("Error", error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserName();
-  }, []);
-
-  const toggleDay = (index) => {
-    const updatedDays = [...tempSelectedDays];
-    updatedDays[index] = !updatedDays[index];
-    setTempSelectedDays(updatedDays);
-  };
-
-  const toggleActive = async (index) => {
-    try {
-      const selectedAlarm = alarms[index];
-
-      // If the alarm is already active, do nothing
-      if (selectedAlarm.isActive) return;
-
-      // Get the alarm ID (you need to store the ID in the alarms state)
-      const { data: alarmData, error: fetchError } = await supabase
-        .from("sleep_plans")
-        .select("id")
-        .eq("user_id", userId);
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      const selectedAlarmId = alarmData[index].id;
-
-      // Update the database: Set the selected alarm as active and deactivate others
-      const { error: updateError } = await supabase
-        .from("sleep_plans")
-        .update({ is_active: false })
-        .eq("user_id", userId);
-
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-
-      const { error: activateError } = await supabase
-        .from("sleep_plans")
-        .update({ is_active: true })
-        .eq("id", selectedAlarmId);
-
-      if (activateError) {
-        throw new Error(activateError.message);
-      }
-
-      // Update the state
-      const updatedAlarms = alarms.map((alarm, i) => ({
-        ...alarm,
-        isActive: i === index, // Set only the selected alarm to active
-      }));
-
-      setAlarms(updatedAlarms);
-    } catch (error) {
-      console.error("Error updating alarm status:", error.message);
-    }
-  };
-
-  const addAlarm = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("sleep_plans")
-        .insert([
-          {
-            user_id: userId,
-            wake_up_time: tempWakeUpTime,
-            sleep_time: tempSleepTime,
-            selected_days: tempSelectedDays,
-            is_active: true, // New alarm is active
-          },
-        ])
-        .select();
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const newAlarmId = data[0].id;
-
-        await supabase
-          .from("sleep_plans")
-          .update({ is_active: false })
-          .eq("user_id", userId)
-          .neq("id", newAlarmId); // Set all others to inactive
-
-        fetchAlarms(); // Refresh alarm list after update
-      }
-
-      setModalVisible(false);
-    } catch (error) {
-      console.error("Error adding alarm:", error.message);
-    }
-  };
-
-  const toggleExpand = (index) => {
-    const updatedAlarms = alarms.map((alarm, i) =>
-      i === index ? { ...alarm, isExpanded: !alarm.isExpanded } : alarm
-    );
-    setAlarms(updatedAlarms);
-  };
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -283,7 +158,7 @@ export default function WakeUpSleepSetup() {
     if (userId) {
       fetchAlarms();
     }
-  }, [userId]); // Fetch alarms when userId is set
+  }, [userId]);
 
   const fetchAlarms = async () => {
     try {
@@ -291,12 +166,11 @@ export default function WakeUpSleepSetup() {
         .from("sleep_plans")
         .select("*")
         .eq("user_id", userId)
-        .order("id", { ascending: false }); // Fetch alarms for the current user
+        .order("id", { ascending: false });
 
       if (error) throw error;
 
       if (data) {
-        // Convert database format to local state format
         const formattedAlarms = data.map((alarm) => ({
           wakeUpTime: alarm.wake_up_time,
           sleepTime: alarm.sleep_time,
@@ -308,10 +182,10 @@ export default function WakeUpSleepSetup() {
             false,
             false,
             false,
-          ], // Ensure an array
+          ],
           isExpanded: false,
           isActive: alarm.is_active,
-          id: alarm.id, // Store the database ID
+          id: alarm.id,
         }));
 
         setAlarms(formattedAlarms);
@@ -321,10 +195,112 @@ export default function WakeUpSleepSetup() {
     }
   };
 
+  const toggleActive = async (index) => {
+    try {
+      const selectedAlarm = alarms[index];
+      const newActiveState = !selectedAlarm.isActive;
+
+      const { data: alarmData, error: fetchError } = await supabase
+        .from("sleep_plans")
+        .select("id")
+        .eq("user_id", userId);
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      const selectedAlarmId = alarmData[index].id;
+
+      if (newActiveState) {
+        await supabase
+          .from("sleep_plans")
+          .update({ is_active: false })
+          .eq("user_id", userId);
+      }
+
+      const { error: updateError } = await supabase
+        .from("sleep_plans")
+        .update({ is_active: newActiveState })
+        .eq("id", selectedAlarmId);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      const updatedAlarms = alarms.map((alarm, i) => ({
+        ...alarm,
+        isActive: i === index ? newActiveState : false,
+      }));
+
+      setAlarms(updatedAlarms);
+    } catch (error) {
+      console.error("Error updating alarm status:", error.message);
+    }
+  };
+
+  const deleteAlarm = async (index) => {
+    try {
+      const alarmId = alarms[index].id;
+
+      const { error } = await supabase
+        .from("sleep_plans")
+        .delete()
+        .eq("id", alarmId);
+
+      if (error) throw error;
+
+      const updatedAlarms = alarms.filter((_, i) => i !== index);
+      setAlarms(updatedAlarms);
+    } catch (error) {
+      console.error("Error deleting alarm:", error.message);
+    }
+  };
+
+  const addAlarm = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("sleep_plans")
+        .insert([
+          {
+            user_id: userId,
+            wake_up_time: tempWakeUpTime,
+            sleep_time: tempSleepTime,
+            selected_days: tempSelectedDays,
+            is_active: true,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const newAlarmId = data[0].id;
+
+        await supabase
+          .from("sleep_plans")
+          .update({ is_active: false })
+          .eq("user_id", userId)
+          .neq("id", newAlarmId);
+
+        fetchAlarms();
+      }
+
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Error adding alarm:", error.message);
+    }
+  };
+
+  const toggleExpand = (index) => {
+    const updatedAlarms = alarms.map((alarm, i) =>
+      i === index ? { ...alarm, isExpanded: !alarm.isExpanded } : alarm
+    );
+    setAlarms(updatedAlarms);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -337,8 +313,8 @@ export default function WakeUpSleepSetup() {
             wakeUpTime={alarm.wakeUpTime}
             sleepTime={alarm.sleepTime}
             selectedDays={alarm.selectedDays}
-            isActive={alarm.isActive} // Pass the active state
-            onToggleActive={() => toggleActive(index)} // Pass the toggle function
+            isActive={alarm.isActive}
+            onToggleActive={() => toggleActive(index)}
             onToggleDay={(dayIndex) => {
               const updatedDays = [...alarm.selectedDays];
               updatedDays[dayIndex] = !updatedDays[dayIndex];
@@ -353,6 +329,7 @@ export default function WakeUpSleepSetup() {
             }}
             isExpanded={alarm.isExpanded}
             toggleExpand={() => toggleExpand(index)}
+            onDelete={() => deleteAlarm(index)} // Pass delete function
           />
         ))}
       </ScrollView>
@@ -364,7 +341,6 @@ export default function WakeUpSleepSetup() {
         <Ionicons name="add" size={32} color="#fff" />
       </TouchableOpacity>
 
-      {/* Modal for Adding Alarm */}
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -431,6 +407,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     margin: 10,
+    paddingTop:35
   },
   timeRow: {
     flexDirection: "row",
@@ -555,6 +532,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 15,
+    
   },
   routineText: {
     color: "#fff",
@@ -563,7 +541,7 @@ const styles = StyleSheet.create({
   },
   activeToggle: {
     position: "absolute",
-    top: 10,
-    right: 10,
+    top: 5,
+    right: 13,
   },
 });

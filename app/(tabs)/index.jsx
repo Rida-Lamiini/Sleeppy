@@ -16,12 +16,21 @@ import { useRouter } from "expo-router";
 
 export default function Activity() {
   const router = useRouter();
-
   const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [activePlan, setActivePlan] = useState(null);
+  const [days, setDays] = useState([
+    { day: "L", active: true },
+    { day: "M", active: true },
+    { day: "M", active: true },
+    { day: "J", active: true },
+    { day: "V", active: true },
+    { day: "S", active: false },
+    { day: "D", active: false },
+  ]);
 
   useEffect(() => {
-    const fetchUserName = async () => {
+    const fetchUserData = async () => {
       try {
         const {
           data: { session },
@@ -33,38 +42,70 @@ export default function Activity() {
         }
 
         const userId = session.user.id;
-
-        const { data, error } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from("user_profiles")
           .select("name")
           .eq("user_id", userId)
           .single();
 
-        if (error || !data) {
+        if (userError || !userData) {
           throw new Error("Unable to fetch user name. Please try again.");
         }
 
-        setUserName(data.name);
+        setUserName(userData.name);
+        await fetchActiveSleepPlan(userId);
       } catch (error) {
-        console.error("Error fetching user name:", error.message);
+        console.error("Error fetching user data:", error.message);
         Alert.alert("Error", error.message);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUserName();
+    fetchUserData();
   }, []);
 
-  const [days, setDays] = useState([
-    { day: "L", active: true },
-    { day: "M", active: true },
-    { day: "M", active: true },
-    { day: "J", active: true },
-    { day: "V", active: true },
-    { day: "S", active: false },
-    { day: "D", active: false },
-  ]);
+  const fetchActiveSleepPlan = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from("sleep_plans")
+        .select("wake_up_time, sleep_time, selected_days")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .single();
+
+      if (error) throw new Error("Could not fetch active sleep plan.");
+      if (data) {
+        setActivePlan(data);
+        // Update days based on selected_days from the active plan
+        const updatedDays = days.map((day, index) => ({
+          ...day,
+          active: data.selected_days.includes(day.day),
+        }));
+        setDays(updatedDays);
+      }
+    } catch (error) {
+      console.error("Error fetching active sleep plan:", error.message);
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (activePlan?.wake_up_time) {
+      const checkWakeupTime = setInterval(() => {
+        const currentTime = new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+
+        if (currentTime === activePlan.wake_up_time) {
+          router.push("/AlarmRingScreen");
+        }
+      }, 10000); // Check every 10 seconds
+      return () => clearInterval(checkWakeupTime);
+    }
+  }, [activePlan]);
 
   const toggleDay = (index) => {
     setDays((prevDays) =>
@@ -96,10 +137,16 @@ export default function Activity() {
           </View>
           <View style={styles.startSection}>
             <Text style={styles.startInstruction}>
-              Wake-up: <Text style={styles.timeText}>6:00 AM</Text>
+              Wake-up:{" "}
+              <Text style={styles.timeText}>
+                {activePlan?.wake_up_time || "N/A"}
+              </Text>
             </Text>
             <Text style={styles.startInstruction}>
-              Bedtime: <Text style={styles.timeText}>10:00 PM</Text>
+              Bedtime:{" "}
+              <Text style={styles.timeText}>
+                {activePlan?.sleep_time || "N/A"}
+              </Text>
             </Text>
             <TouchableOpacity
               style={styles.startButton}
@@ -113,7 +160,9 @@ export default function Activity() {
 
         <View style={styles.scheduleContainer}>
           <Text style={styles.scheduleText}>My timetable</Text>
-          <Text style={styles.daysText}>5 days active</Text>
+          <Text style={styles.daysText}>
+            {days.filter((day) => day.active).length} days active
+          </Text>
         </View>
         <View style={styles.daysRow}>
           {days.map((day, index) => (
