@@ -1,50 +1,101 @@
-# Welcome to your Expo app 👋
+# Sleep Tracking App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
+The **Sleep Tracking App** is designed to help university students improve their sleep quality by providing tools to track sleep, set goals, and receive reminders. The app integrates with **Supabase** for data management and **Kinde** for authentication, ensuring a seamless and secure user experience.
 
-## Get started
+---
 
-1. Install dependencies
+## Features
+1. **Sleep Tracking**:
+   - Log sleep duration and quality.
+   - View daily and weekly sleep statistics.
+2. **Goal Setting**:
+   - Set personalized sleep goals (e.g., bedtime and wake-up time).
+   - Track progress toward achieving goals.
+3. **Reminders**:
+   - Receive recurring notifications for bedtime and wake-up.
+   - Customize reminder times and frequency.
+4. **Sleep Analysis**:
+   - View detailed sleep patterns and trends.
+   - Download sleep reports in PDF format.
+5. **Meditation**:
+   - Access guided meditation sessions to relax and improve sleep.
+6. **Profile and Settings**:
+   - Update profile information (e.g., name, email, profile picture).
+   - Customize app settings (e.g., dark mode, notification preferences).
 
+---
+
+## Technologies Used
+- **Frontend**: React Native, Expo
+- **Backend**: Supabase (Database and Authentication)
+- **Authentication**: Kinde
+- **Notifications**: Expo Notifications
+- **Charts and Graphs**: React Native Chart Kit
+- **PDF Generation**: React Native PDF Library
+
+---
+
+## Setup Instructions
+
+### Prerequisites
+- Node.js (v16 or higher)
+- Expo CLI (install with `npm install -g expo-cli`)
+- Supabase account (for database and authentication)
+- Kinde account (for social login integration)
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/sleep-tracking-app.git
+   cd sleep-tracking-app
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
-   ```bash
-    npx expo start
+3. Set up environment variables:
+   - Create a `.env` file in the root directory.
+   - Add the following variables:
+   ```env
+   SUPABASE_URL=your-supabase-url
+   SUPABASE_KEY=your-supabase-key
+   KINDE_CLIENT_ID=your-kinde-client-id
+   KINDE_CLIENT_SECRET=your-kinde-client-secret
    ```
 
-In the output, you'll find options to open the app in a
+4. Start the development server:
+   ```bash
+   expo start
+   ```
+   - Scan the QR code with the **Expo Go** app (available on iOS and Android) to run the app on your device.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Usage
 
-## Get a fresh project
+### Sign Up/Log In:
+- Create an account or log in using email/password or social login (Google/Facebook).
 
-When you're ready, run:
+### Set Sleep Goals:
+- Navigate to the **Goals** screen and set your desired bedtime and wake-up time.
 
-```bash
-npm run reset-project
-```
+### Track Sleep:
+- Log your sleep duration and quality on the **Sleep Tracking** screen.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### View Sleep History:
+- Check your sleep statistics and trends on the **Sleep History** screen.
 
-## Learn more
+### Receive Reminders:
+- Set reminders for bedtime and wake-up on the **Reminders** screen.
 
-To learn more about developing your project with Expo, look at the following resources:
+### Explore Meditation:
+- Access guided meditation sessions on the **Meditation** screen.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Customize Profile:
+- Update your profile and app settings on the **Profile** screen.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
